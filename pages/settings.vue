@@ -8,7 +8,18 @@ const links = [[{
   label: 'Employees',
   icon: 'i-heroicons-user-group',
   to: '/settings/members'
-}, {
+},
+{
+  label: 'Organisations',
+  icon: 'i-heroicons-user-group',
+  to: '/settings/organisations'
+},
+{
+  label: 'Lookups',
+  icon: 'i-heroicons-user-group',
+  to: '/settings/lookups'
+},
+{
   label: 'Notifications',
   icon: 'i-heroicons-bell',
   to: '/settings/notifications'

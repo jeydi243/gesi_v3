@@ -35,6 +35,17 @@ export interface Notification {
   date: string
 }
 
+export interface Classe {
+  id: number
+  unread?: boolean
+  name?: string
+  description?: string
+  code?: string
+  sender: User
+  body: string
+  date: string
+}
+
 export type Period = 'daily' | 'weekly' | 'monthly'
 
 export interface Range {

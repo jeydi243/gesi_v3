@@ -6,6 +6,8 @@ export default withNuxt({
     '@typescript-eslint/no-explicit-any': 'off',
     'vue/first-attribute-linebreak': 'off',
     'vue/max-attributes-per-line': 'off',
-    'vue/html-closing-bracket-newline': 'off'
+    'vue/html-closing-bracket-newline': 'off',
+    '@stylistic/indent': 'off',
+    'vue/html-indent': 'off'
   }
 })
