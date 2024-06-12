@@ -6,24 +6,13 @@ const tabItems = [{
 }, {
     label: 'Unread'
 }]
+let lookupsResults = ref<Lookups[] | []>([]);
+const isNewUserModalOpen = ref(false)
+const isNewClasseModalOpen = ref(false)
 const selectedTab = ref(0)
-// const runtimeConfig = useRuntimeConfig()
-const dropdownItems = [[{
-    label: 'Mark as unread',
-    icon: 'i-heroicons-check-circle'
-}, {
-    label: 'Mark as important',
-    icon: 'i-heroicons-exclamation-circle'
-}], [{
-    label: 'Star thread',
-    icon: 'i-heroicons-star'
-}, {
-    label: 'Mute thread',
-    icon: 'i-heroicons-pause-circle'
-}]]
+const selectedClasse = ref<Classe | null>(null)
 
 const { data: classes } = await useFetch<Classe[]>('http://127.0.0.1:4000/classes', { default: () => [] })
-const { data: lookupsResults } = await useFetch<Lookups[]>('http://127.0.0.1:4000/lookups/' + selectedTab.value, { default: () => [] })
 
 // Filter classes based on the selected tab
 const filteredClasses = computed(() => {
@@ -34,22 +23,18 @@ const filteredClasses = computed(() => {
     return classes.value
 })
 
-const selectedClasse = ref<Classe | null>()
-const lookupsColumns = [{
-    key: 'id',
-    label: 'ID'
-}, {
-    key: 'code',
-    label: 'Code'
-}, {
-    key: 'description',
-    label: 'Description'
-}, {
-    key: 'classe_id',
-    label: 'Classe'
-}, {
-    key: 'role'
-}]
+const lookupsColumns = [
+    {
+        key: 'code',
+        label: 'Code',
+        sortable: true
+    }, {
+        key: 'description',
+        label: 'Description'
+    }, {
+        key: 'role'
+    }]
+
 const isMailPanelOpen = computed({
     get() {
         return !!selectedClasse.value
@@ -61,12 +46,27 @@ const isMailPanelOpen = computed({
     }
 })
 
+async function fetchLookups(id: string = 'default') {
+    try {
+        lookupsResults.value = await $fetch<Lookups[]>('http://127.0.0.1:4000/lookups/byclasse', { method: 'GET', params: { classe_id: id } })
+        // lookupsResults.value = data.value
+    } catch (error) {
+        console.log('Error', error);
+    }
+}
+
 // Reset selected mail if it's not in the filtered mails
 watch(filteredClasses, () => {
     if (!filteredClasses.value.find(mail => mail.id === selectedClasse.value?.id)) {
         selectedClasse.value = null
     }
 })
+
+watch(selectedClasse, () => {
+    console.log('Selected class ID = %s', selectedClasse.value.id);
+    fetchLookups(selectedClasse.value.id).then(() => console.log('Lookups fetched executed %s', selectedClasse.value.id));
+})
+
 </script>
 
 <template>
@@ -74,8 +74,7 @@ watch(filteredClasses, () => {
         <UDashboardPanel id="inbox" :width="400" :resizable="{ min: 300, max: 500 }">
             <UDashboardNavbar title="Classes" :badge="filteredClasses.length">
                 <template #right>
-                    <UTabs v-model="selectedTab" :items="tabItems"
-                        :ui="{ wrapper: '', list: { height: 'h-9', tab: { height: 'h-7', size: 'text-[13px]' } } }" />
+                    <UButton icon="i-heroicons-plus-16-solid" color="teal" variant="ghost" @click="isNewClasseModalOpen = true" />
                 </template>
             </UDashboardNavbar>
             <ClassesList v-model="selectedClasse" :classes="filteredClasses" />
@@ -86,7 +85,6 @@ watch(filteredClasses, () => {
                 <UDashboardNavbar>
                     <template #toggle>
                         <UDashboardNavbarToggle icon="i-heroicons-x-mark" />
-
                         <UDivider orientation="vertical" class="mx-1.5 lg:hidden" />
                     </template>
 
@@ -116,28 +114,65 @@ watch(filteredClasses, () => {
                     </template>
 
                     <template #right>
-                        <UTooltip text="Reply">
-                            <UButton icon="i-heroicons-arrow-uturn-left" color="gray" variant="ghost" />
-                        </UTooltip>
-
-                        <UTooltip text="Forward">
-                            <UButton icon="i-heroicons-arrow-uturn-right" color="gray" variant="ghost" />
-                        </UTooltip>
-
-                        <UDivider orientation="vertical" class="mx-1.5" />
-
-                        <UDropdown :items="dropdownItems">
-                            <UButton icon="i-heroicons-ellipsis-vertical" color="gray" variant="ghost" />
-                        </UDropdown>
+                        <UButton icon="i-heroicons-plus-16-solid" label="Ajouter" color="teal" variant="solid" @click="isNewUserModalOpen = true" />
                     </template>
                 </UDashboardNavbar>
 
                 <!-- <ClassesMail :classe="selectedClasse" /> -->
-                <UTable :rows="lookupsResults" :columns="lookupsColumns" />
+                <UCard :ui="{
+                    base: 'm-2',
+                    divide: 'divide-y divide-gray-200 dark:divide-gray-700',
+                    header: {
+                        base: '',
+                        background: '',
+                        padding: 'py-3 px-3'
+                    }
+                }">
+                    <template #header>
+                        Informations de la classe
+                    </template>
+                </UCard>
+                <UCard :ui="{
+                    base: 'm-2',
+                    divide: 'divide-y divide-gray-200 dark:divide-gray-700',
+                    header: {
+                        base: '',
+                        background: '',
+                        padding: 'px-1'
+                    },
+                    body: {
+                        base: '',
+                        background: '',
+                        padding: 'px-1'
+                    }
+                }">
+                    <template #header>
+                        <h2 class="font-semibold text-xl text-gray-900 dark:text-white leading-tight">
+                            Lookups
+                        </h2>
+                    </template>
+
+                    <UTable :rows="lookupsResults" :columns="lookupsColumns"
+                        class="m-2 border border-separate rounded-md" />
+
+                    <template #footer>
+                        classe id {{ selectedClasse.id }}
+                    </template>
+                </UCard>
             </template>
             <div v-else class="flex-1 hidden lg:flex items-center justify-center">
                 <UIcon name="i-heroicons-inbox" class="w-32 h-32 text-gray-400 dark:text-gray-500" />
             </div>
         </UDashboardPanel>
+        <UDashboardModal v-model="isNewUserModalOpen" title="Ajouter un Lookups"
+            description="`Ajouter un lookups de la classe ${selectedClasse.code}`" :ui="{ width: 'sm:max-w-md' }">
+            <!-- ~/components/users/UsersForm.vue -->
+            <UsersForm @close="isNewUserModalOpen = false" />
+        </UDashboardModal>
+        <UDashboardModal v-model="isNewClasseModalOpen" title="Ajouter une classe"
+            description="Ajouter une classe" :ui="{ width: 'sm:max-w-md' }">
+            <!-- ~/components/users/UsersForm.vue -->
+            <UsersForm @close="isNewClasseModalOpen = false" />
+        </UDashboardModal>
     </UDashboardPage>
 </template>

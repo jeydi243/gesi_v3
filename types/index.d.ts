@@ -40,7 +40,7 @@ export interface Notification {
 }
 
 export interface Classe extends Audit {
-    id: number;
+    id: string;
     unread?: boolean;
     name?: string;
     description?: string;

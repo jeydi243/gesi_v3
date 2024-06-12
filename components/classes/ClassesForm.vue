@@ -1,24 +1,31 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '#ui/types'
+import type { Classe } from '~/types'
 
 const emit = defineEmits(['close'])
 
 const state = reactive({
-  name: undefined,
-  email: undefined
+  code: undefined,
+  description: undefined
 })
 
 // https://ui.nuxt.com/components/form
 const validate = (state: any): FormError[] => {
   const errors = []
-  if (!state.name) errors.push({ path: 'name', message: 'Please enter a name.' })
-  if (!state.email) errors.push({ path: 'email', message: 'Please enter an email.' })
+  if (!state.code) errors.push({ path: 'code', message: 'Please enter a code.' })
+  if (!state.description) errors.push({ path: 'description', message: 'Please enter an description.' })
   return errors
 }
 
 async function onSubmit(event: FormSubmitEvent<any>) {
   // Do something with data
   console.log(event.data)
+  // send new classe
+  try {
+      await $fetch<Classe[]>('http://127.0.0.1:4000/classe', { method: 'POST', body: event.data })
+  } catch (error) {
+      console.log('Error', error);
+  }
 
   emit('close')
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { format, isToday } from 'date-fns'
+// import { format, isToday } from 'date-fns'
 import type { Classe } from '~/types'
 
 const props = defineProps({
@@ -30,7 +30,6 @@ watch(selectedClasse, () => {
   if (!selectedClasse.value) {
     return
   }
-  console.log(selectedClasse.value)
 
   const ref = mailsRefs.value[selectedClasse.value.id]
   if (ref) {

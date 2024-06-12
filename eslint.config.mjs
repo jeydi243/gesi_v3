@@ -11,6 +11,11 @@ export default withNuxt({
         "vue/html-indent": "off",
         "@stylistic/member-delimiter-style": "off",
         "@stylistic/quotes": "off",
-        "@stylistic/semi": "off"
+        "@stylistic/semi": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "@stylistic/keyword-spacing": "off",
+        "prefer-const": "off",
+        "vue/html-quotes": "off",
+        "vue/block-tag-newline": "off"
     }
 });
