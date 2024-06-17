@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { Classe, Lookups } from '~/types'
+import type { Classe, Organization } from '~/types'
 
-let lookupsResults = ref<Lookups[] | []>([]);
-const isNewLookupsModalOpen = ref(false)
+let organizationResults = ref<Organization[] | []>([]);
+const isNewOrganizationModalOpen = ref(false)
 const actionToSubmit = ref('Add')
 const isNewClasseModalOpen = ref(false)
 const selectedTab = ref(0)
 const selectedClasse = ref<Classe | null>(null)
-const selectedLookups = ref<Lookups | null>(null)
+const selectedOrganization = ref<Organization | null>(null)
 
 const { data: classes, refresh } = await useFetch<Classe[]>('http://127.0.0.1:4000/classes', { default: () => [] })
 
@@ -20,7 +20,7 @@ const filteredClasses = computed(() => {
     return classes.value
 })
 
-const lookupsColumns = [
+const organizationColumns = [
     {
         key: 'code',
         label: 'Code',
@@ -33,19 +33,19 @@ const lookupsColumns = [
         label: 'Actions'
     }]
 
-async function editLookups(row: Lookups) {
+async function editOrganization(row: Organization) {
     actionToSubmit.value = 'Update'
-    selectedLookups.value = row
+    selectedOrganization.value = row
     actionToSubmit.value = 'Add'
-    isNewLookupsModalOpen.value = true
+    isNewOrganizationModalOpen.value = true
 }
 
-async function deleteLookups(lookups: Lookups) {
+async function deleteOrganization(organization: Organization) {
     const toast = useToast()
     try {
-        const response = await $fetch<Lookups | object>('http://127.0.0.1:4000/lookups/' + lookups.id, { method: 'DELETE' })
+        const response = await $fetch<Organization | object>('http://127.0.0.1:4000/organizations/' + organization.id, { method: 'DELETE' })
         console.log({ response });
-        toast.add({ title: 'Delete lookups ' + lookups.name, description: `${response}`, timeout: 5000 })
+        toast.add({ title: 'Delete organization ' + organization.name, description: `${response}`, timeout: 5000 })
         setTimeout(() => {
             // isLoadingBtn.value = false
         }, 1000);
@@ -55,15 +55,15 @@ async function deleteLookups(lookups: Lookups) {
     }
 }
 
-const items = (row: Lookups) => [
+const items = (row: Organization) => [
     [{
         label: 'Edit',
         icon: 'i-heroicons-pencil-square-20-solid',
-        click: () => editLookups(row)
+        click: () => editOrganization(row)
     }], [{
         label: 'Delete',
         icon: 'i-heroicons-trash-20-solid',
-        click: () => deleteLookups(row)
+        click: () => deleteOrganization(row)
     }]
 ]
 const isMailPanelOpen = computed({
@@ -80,18 +80,18 @@ const isMailPanelOpen = computed({
 function modalClasseClosed() {
     isNewClasseModalOpen.value = false;
     refresh();
-    fetchLookups(selectedClasse.value.id)
+    fetchOrganization(selectedClasse.value.id)
 }
 
-function modalLookupsClosed() {
-    isNewLookupsModalOpen.value = false;
-    fetchLookups(selectedClasse.value.id)
+function modalOrganizationClosed() {
+    isNewOrganizationModalOpen.value = false;
+    fetchOrganization(selectedClasse.value.id)
 }
 
-async function fetchLookups(id: string = 'default') {
+async function fetchOrganization(id: string = 'default') {
     try {
-        lookupsResults.value = await $fetch<Lookups[]>('http://127.0.0.1:4000/lookups/byclasse', { method: 'GET', params: { classe_id: id } })
-        // lookupsResults.value = data.value
+        organizationResults.value = await $fetch<Organization[]>('http://127.0.0.1:4000/organization/byclasse', { method: 'GET', params: { classe_id: id } })
+        // organizationResults.value = data.value
     } catch (error) {
         console.log('Error', error);
     }
@@ -106,8 +106,8 @@ watch(filteredClasses, () => {
 
 watch(selectedClasse, () => {
     console.log('Selected class ID = %s', selectedClasse.value.id);
-    selectedLookups.value = null
-    fetchLookups(selectedClasse.value.id).then(() => console.log('Lookups fetched executed %s', selectedClasse.value.id));
+    selectedOrganization.value = null
+    fetchOrganization(selectedClasse.value.id).then(() => console.log('Organization fetched executed %s', selectedClasse.value.id));
 })
 
 </script>
@@ -135,13 +135,13 @@ watch(selectedClasse, () => {
                     <template #left>
                         <UTooltip text="Move to junk">
                             <UButton icon="i-heroicons-arrow-path" color="gray" variant="ghost"
-                                @click="fetchLookups(selectedClasse.id)" />
+                                @click="fetchOrganization(selectedClasse.id)" />
                         </UTooltip>
                     </template>
 
                     <template #right>
                         <UButton icon="i-heroicons-plus-16-solid" label="Ajouter" color="teal" variant="solid"
-                            @click="isNewLookupsModalOpen = true" />
+                            @click="isNewOrganizationModalOpen = true" />
                     </template>
                 </UDashboardNavbar>
 
@@ -175,11 +175,11 @@ watch(selectedClasse, () => {
                 }">
                     <template #header>
                         <h2 class="font-semibold text-xl text-gray-900 dark:text-white leading-tight">
-                            Lookups
+                            Organization
                         </h2>
                     </template>
 
-                    <UTable :rows="lookupsResults" :columns="lookupsColumns"
+                    <UTable :rows="organizationResults" :columns="organizationColumns"
                         class="m-2 border border-separate rounded-md">
                         <template #actions-data="{ row }">
                             <UDropdown :items="items(row)">
@@ -196,12 +196,12 @@ watch(selectedClasse, () => {
                 <UIcon name="i-heroicons-inbox" class="w-32 h-32 text-gray-400 dark:text-gray-500" />
             </div>
         </UDashboardPanel>
-        <UDashboardModal v-model="isNewLookupsModalOpen" :title="`${actionToSubmit} un Lookups`"
-            :description="`${actionToSubmit} un lookups de la classe ${selectedClasse?.code}`"
+        <UDashboardModal v-model="isNewOrganizationModalOpen" :title="`${actionToSubmit} un Organization`"
+            :description="`${actionToSubmit} un organization de la classe ${selectedClasse?.code}`"
             :ui="{ width: 'sm:max-w-md' }">
             <!-- ~/components/users/UsersForm.vue -->
-            <ClassesLookupsForm :classe="selectedClasse" :action='actionToSubmit' :lookups="selectedLookups"
-                @close="modalLookupsClosed" />
+            <ClassesOrganizationForm :classe="selectedClasse" :action='actionToSubmit' :organization="selectedOrganization"
+                @close="modalOrganizationClosed" />
         </UDashboardModal>
         <UDashboardModal v-model="isNewClasseModalOpen" title="Ajouter une classe" description="Ajouter une classe"
             :ui="{ width: 'sm:max-w-md' }">

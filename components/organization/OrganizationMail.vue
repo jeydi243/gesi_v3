@@ -25,7 +25,7 @@ defineProps({
             {{ organization.description }}
           </p>
           <p class="text-gray-500 dark:text-gray-400 font-medium">
-            {{ organization.code }}
+            {{ organization?.code }}
           </p>
         </div>
       </div>

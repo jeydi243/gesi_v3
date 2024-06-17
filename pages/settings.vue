@@ -10,9 +10,9 @@ const links = [[{
   to: '/settings/members'
 },
 {
-  label: 'Organisations',
+  label: 'Organizations',
   icon: 'i-heroicons-user-group',
-  to: '/settings/organisations'
+  to: '/settings/organizations'
 },
 {
   label: 'Lookups',

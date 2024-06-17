@@ -51,15 +51,16 @@ export interface Classe extends Audit {
     date: string;
 }
 export interface Lookups extends Audit {
-    id: number;
+    id: string;
     classe_id: Classe;
-    name?: string;
-    code?: string;
-    description?: string;
+    name: string;
+    code: string;
+    description: string;
+    parent_lookups_id?: string;
 }
 
 export interface Organization extends Audit {
-    id: number;
+    id: string;
     lookups_id: Lookups;
     code: string;
     name?: string;
