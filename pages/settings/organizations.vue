@@ -4,20 +4,20 @@ import type { Classe, Organization } from '~/types'
 let organizationResults = ref<Organization[] | []>([]);
 const isNewOrganizationModalOpen = ref(false)
 const actionToSubmit = ref('Add')
-const isNewClasseModalOpen = ref(false)
+const isNewOrgModalOpen = ref(false)
 const selectedTab = ref(0)
 const selectedClasse = ref<Classe | null>(null)
 const selectedOrganization = ref<Organization | null>(null)
 
-const { data: classes, refresh } = await useFetch<Classe[]>('http://127.0.0.1:4000/classes', { default: () => [] })
+const { data: organizations, refresh } = await useFetch<Classe[]>('http://127.0.0.1:4000/organizations', { default: () => [] })
 
-// Filter classes based on the selected tab
+// Filter organizations based on the selected tab
 const filteredClasses = computed(() => {
     if (selectedTab.value === 1) {
-        return classes.value.filter(mail => !!mail.unread)
+        return organizations.value.filter(mail => !!mail.unread)
     }
 
-    return classes.value
+    return organizations.value
 })
 
 const organizationColumns = [
@@ -78,7 +78,7 @@ const isMailPanelOpen = computed({
 })
 
 function modalClasseClosed() {
-    isNewClasseModalOpen.value = false;
+    isNewOrgModalOpen.value = false;
     refresh();
     fetchOrganization(selectedClasse.value.id)
 }
@@ -90,7 +90,7 @@ function modalOrganizationClosed() {
 
 async function fetchOrganization(id: string = 'default') {
     try {
-        organizationResults.value = await $fetch<Organization[]>('http://127.0.0.1:4000/organization/byclasse', { method: 'GET', params: { classe_id: id } })
+        organizationResults.value = await $fetch<Organization[]>('http://127.0.0.1:4000/organizations/byparent', { method: 'GET', params: { organization_parent_id: id } })
         // organizationResults.value = data.value
     } catch (error) {
         console.log('Error', error);
@@ -118,10 +118,10 @@ watch(selectedClasse, () => {
             <UDashboardNavbar title="Classes" :badge="filteredClasses.length">
                 <template #right>
                     <UButton icon="i-heroicons-plus-16-solid" color="teal" variant="ghost"
-                        @click="isNewClasseModalOpen = true" />
+                        @click="isNewOrgModalOpen = true" />
                 </template>
             </UDashboardNavbar>
-            <ClassesList v-model="selectedClasse" :classes="filteredClasses" />
+            <ClassesList v-model="selectedClasse" :organizations="filteredClasses" />
         </UDashboardPanel>
 
         <UDashboardPanel v-model="isMailPanelOpen" collapsible grow side="right">
@@ -145,7 +145,7 @@ watch(selectedClasse, () => {
                     </template>
                 </UDashboardNavbar>
 
-                <!-- <ClassesMail :classe="selectedClasse" /> -->
+                <!-- <ClassesMail :organization="selectedClasse" /> -->
                 <UCard :ui="{
                     base: 'm-2',
                     divide: 'divide-y divide-gray-200 dark:divide-gray-700',
@@ -156,7 +156,7 @@ watch(selectedClasse, () => {
                     }
                 }">
                     <template #header>
-                        Informations de la classe
+                        Informations de la organization
                     </template>
                 </UCard>
                 <UCard :ui="{
@@ -188,7 +188,7 @@ watch(selectedClasse, () => {
                         </template>
                     </UTable>
                     <!-- <template #footer>
-                        classe id {{ selectedClasse.id }}
+                        organization id {{ selectedClasse.id }}
                     </template> -->
                 </UCard>
             </template>
@@ -197,13 +197,13 @@ watch(selectedClasse, () => {
             </div>
         </UDashboardPanel>
         <UDashboardModal v-model="isNewOrganizationModalOpen" :title="`${actionToSubmit} un Organization`"
-            :description="`${actionToSubmit} un organization de la classe ${selectedClasse?.code}`"
+            :description="`${actionToSubmit} un organization de la organization ${selectedClasse?.code}`"
             :ui="{ width: 'sm:max-w-md' }">
             <!-- ~/components/users/UsersForm.vue -->
-            <ClassesOrganizationForm :classe="selectedClasse" :action='actionToSubmit' :organization="selectedOrganization"
+            <OrganizationForm :organization="selectedClasse" :action='actionToSubmit' :organization="selectedOrganization"
                 @close="modalOrganizationClosed" />
         </UDashboardModal>
-        <UDashboardModal v-model="isNewClasseModalOpen" title="Ajouter une classe" description="Ajouter une classe"
+        <UDashboardModal v-model="isNewOrgModalOpen" title="Ajouter une organization" description="Ajouter une organization"
             :ui="{ width: 'sm:max-w-md' }">
             <!-- ~/components/users/UsersForm.vue -->
             <ClassesForm @close="modalClasseClosed" />

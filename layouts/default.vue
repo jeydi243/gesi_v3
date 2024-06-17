@@ -45,8 +45,8 @@ const links = [{
     to: '/settings/members'
   },
   {
-    label: 'Organisations',
-    to: '/settings/organisations'
+    label: 'Organizations',
+    to: '/settings/organizations'
   },
   {
     label: 'Lookups',
