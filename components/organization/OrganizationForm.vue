@@ -1,13 +1,46 @@
 <script setup lang="ts">
+import { format } from 'date-fns'
 import type { FormError, FormSubmitEvent } from '#ui/types'
-import type { Organization } from '~/types'
+import type { Lookups, Organization } from '~/types'
 
 const emit = defineEmits(['close'])
+let props = defineProps({
+  organizationParent: {
+    type: Object as PropType<Organization>,
+    required: false,
+    default: null
+  },
+  action: {
+    type: String,
+    required: true,
+    default: "Add"
+  }
+})
 const isLoadingBtn = ref(false)
+const isLoadingLookup = ref(false)
 const state = reactive({
   name: undefined,
   code: undefined,
-  description: undefined
+  description: undefined,
+  lookup_id: null,
+  active_date: null,
+  end_date: null
+})
+
+const date = ref(new Date())
+let lookups = ref([])
+async function getCategory() {
+  try {
+    const data = await $fetch<Lookups[]>('http://127.0.0.1:4000/lookups', { method: 'GET' })
+    lookups.value = data.map((l) => {
+      return { name: l.name, value: l.id }
+    })
+  } catch (error) {
+    console.log(error);
+  }
+}
+onMounted(() => {
+  getCategory()
 })
 
 // https://ui.nuxt.com/components/form
@@ -15,6 +48,8 @@ const validate = (state: any): FormError[] => {
   const errors = []
   if (!state.name) errors.push({ path: 'name', message: 'Please enter a name.' })
   if (!state.code) errors.push({ path: 'code', message: 'Please enter a code.' })
+  if (!state.lookup_id) errors.push({ path: 'lookup_id', message: 'Please enter a organization category.' })
+  if (!state.active_date) errors.push({ path: 'active_date', message: 'Please enter a organization active date.' })
   if (!state.description) errors.push({ path: 'description', message: 'Please enter an description.' })
   return errors
 }
@@ -24,25 +59,41 @@ async function onSubmit(event: FormSubmitEvent<any>) {
   console.log(event.data)
   // send new classe
   try {
-    await $fetch<Organization>('http://127.0.0.1:4000/organizations', { method: 'POST', body: event.data })
+    const response = await $fetch<Organization>('http://127.0.0.1:4000/organizations', { method: 'POST', body: event.data })
+    console.log({ response });
     isLoadingBtn.value = false
+    emit('close')
   } catch (error) {
     console.log('Error', error);
     isLoadingBtn.value = false
   }
-
-  emit('close')
 }
 </script>
 
 <template>
   <UForm :validate="validate" :validate-on="['submit']" :state="state" class="space-y-4" @submit="onSubmit">
     <UFormGroup label="Name" name="name">
-      <UInput v-model="state.name" placeholder="NUXTUI" autofocus />
+      <UInput v-model="state.name" placeholder="Gecamines" autofocus />
     </UFormGroup>
 
-    <UFormGroup label="Code" name="name">
-      <UInput v-model="state.code" placeholder="Code" autofocus />
+    <UFormGroup label="Code" name="code">
+      <UInput v-model="state.code" placeholder="Gcm" />
+    </UFormGroup>
+
+    <UFormGroup label="Category" name="lookup_id">
+      <USelect v-model="state.lookup_id" :options="lookups" option-attribute="name" :loading="isLoadingLookup"
+        placeholder="Org category" />
+    </UFormGroup>
+
+    <UFormGroup label="Active Date" name="active_date">
+      <UPopover :popper="{ placement: 'bottom-start' }">
+        <UButton icon="i-heroicons-calendar-days-20-solid"
+          :label="format(state.active_date ? state.active_date : date, 'd MMM, yyy')" />
+
+        <template #panel="{ close }">
+          <DatePicker v-model="state.active_date" is-required @close="close" />
+        </template>
+      </UPopover>
     </UFormGroup>
 
     <UFormGroup label="Description" name="description">
@@ -52,7 +103,7 @@ async function onSubmit(event: FormSubmitEvent<any>) {
 
     <div class="flex justify-end gap-3">
       <UButton label="Cancel" color="gray" variant="ghost" @click="emit('close')" />
-      <UButton type="submit" label="Save" color="black" :loading='isLoadingBtn' />
+      <UButton type="submit" :label="props.action" color="black" :loading='isLoadingBtn' />
     </div>
   </UForm>
 </template>

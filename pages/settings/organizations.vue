@@ -1,24 +1,14 @@
 <script setup lang="ts">
-import type { Classe, Organization } from '~/types'
+import type { Organization } from '~/types'
 
 let organizationResults = ref<Organization[] | []>([]);
 const isNewOrganizationModalOpen = ref(false)
 const actionToSubmit = ref('Add')
 const isNewOrgModalOpen = ref(false)
-const selectedTab = ref(0)
-const selectedClasse = ref<Classe | null>(null)
+const isNewChildOrgModalOpen = ref(false)
 const selectedOrganization = ref<Organization | null>(null)
 
-const { data: organizations, refresh } = await useFetch<Classe[]>('http://127.0.0.1:4000/organizations', { default: () => [] })
-
-// Filter organizations based on the selected tab
-const filteredClasses = computed(() => {
-    if (selectedTab.value === 1) {
-        return organizations.value.filter(mail => !!mail.unread)
-    }
-
-    return organizations.value
-})
+const { data: organizations, refresh } = await useFetch<Organization[]>('http://127.0.0.1:4000/organizations', { default: () => [] })
 
 const organizationColumns = [
     {
@@ -36,14 +26,14 @@ const organizationColumns = [
 async function editOrganization(row: Organization) {
     actionToSubmit.value = 'Update'
     selectedOrganization.value = row
-    actionToSubmit.value = 'Add'
+    // actionToSubmit.value = 'Add'
     isNewOrganizationModalOpen.value = true
 }
 
 async function deleteOrganization(organization: Organization) {
     const toast = useToast()
     try {
-        const response = await $fetch<Organization | object>('http://127.0.0.1:4000/organizations/' + organization.id, { method: 'DELETE' })
+        const response = await $fetch<Organization | object>('http://127.0.0.1:4000/organizations' + organization.id, { method: 'DELETE' })
         console.log({ response });
         toast.add({ title: 'Delete organization ' + organization.name, description: `${response}`, timeout: 5000 })
         setTimeout(() => {
@@ -68,24 +58,19 @@ const items = (row: Organization) => [
 ]
 const isMailPanelOpen = computed({
     get() {
-        return !!selectedClasse.value
+        return !!selectedOrganization.value
     },
     set(value: boolean) {
         if (!value) {
-            selectedClasse.value = null
+            selectedOrganization.value = null
         }
     }
 })
 
-function modalClasseClosed() {
+function modalOrganizationClosed() {
     isNewOrgModalOpen.value = false;
     refresh();
-    fetchOrganization(selectedClasse.value.id)
-}
-
-function modalOrganizationClosed() {
-    isNewOrganizationModalOpen.value = false;
-    fetchOrganization(selectedClasse.value.id)
+    fetchOrganization(selectedOrganization.value.id)
 }
 
 async function fetchOrganization(id: string = 'default') {
@@ -98,16 +83,16 @@ async function fetchOrganization(id: string = 'default') {
 }
 
 // Reset selected mail if it's not in the filtered mails
-watch(filteredClasses, () => {
-    if (!filteredClasses.value.find(mail => mail.id === selectedClasse.value?.id)) {
-        selectedClasse.value = null
-    }
-})
+// watch(filteredOrganization, () => {
+//     if (!filteredOrganization.value.find(mail => mail.id === selectedOrganization.value?.id)) {
+//         selectedOrganization.value = null
+//     }
+// })
 
-watch(selectedClasse, () => {
-    console.log('Selected class ID = %s', selectedClasse.value.id);
+watch(selectedOrganization, () => {
+    console.log('Selected class ID = %s', selectedOrganization.value.id);
     selectedOrganization.value = null
-    fetchOrganization(selectedClasse.value.id).then(() => console.log('Organization fetched executed %s', selectedClasse.value.id));
+    fetchOrganization(selectedOrganization.value.id).then(() => console.log('Organization fetched executed %s', selectedOrganization.value.id));
 })
 
 </script>
@@ -115,17 +100,17 @@ watch(selectedClasse, () => {
 <template>
     <UDashboardPage>
         <UDashboardPanel id="inbox" :width="400" :resizable="{ min: 300, max: 500 }">
-            <UDashboardNavbar title="Classes" :badge="filteredClasses.length">
+            <UDashboardNavbar title="Organizations" :badge="organizations.length">
                 <template #right>
                     <UButton icon="i-heroicons-plus-16-solid" color="teal" variant="ghost"
                         @click="isNewOrgModalOpen = true" />
                 </template>
             </UDashboardNavbar>
-            <ClassesList v-model="selectedClasse" :organizations="filteredClasses" />
+            <OrganizationList v-model="selectedOrganization" :organizations="organizations" />
         </UDashboardPanel>
 
         <UDashboardPanel v-model="isMailPanelOpen" collapsible grow side="right">
-            <template v-if="selectedClasse">
+            <template v-if="selectedOrganization">
                 <UDashboardNavbar>
                     <template #toggle>
                         <UDashboardNavbarToggle icon="i-heroicons-x-mark" />
@@ -135,7 +120,7 @@ watch(selectedClasse, () => {
                     <template #left>
                         <UTooltip text="Move to junk">
                             <UButton icon="i-heroicons-arrow-path" color="gray" variant="ghost"
-                                @click="fetchOrganization(selectedClasse.id)" />
+                                @click="fetchOrganization(selectedOrganization.id)" />
                         </UTooltip>
                     </template>
 
@@ -145,7 +130,6 @@ watch(selectedClasse, () => {
                     </template>
                 </UDashboardNavbar>
 
-                <!-- <ClassesMail :organization="selectedClasse" /> -->
                 <UCard :ui="{
                     base: 'm-2',
                     divide: 'divide-y divide-gray-200 dark:divide-gray-700',
@@ -156,7 +140,7 @@ watch(selectedClasse, () => {
                     }
                 }">
                     <template #header>
-                        Informations de la organization
+                        {{ selectedOrganization.name }}
                     </template>
                 </UCard>
                 <UCard :ui="{
@@ -188,7 +172,7 @@ watch(selectedClasse, () => {
                         </template>
                     </UTable>
                     <!-- <template #footer>
-                        organization id {{ selectedClasse.id }}
+                        organization id {{ selectedOrganization.id }}
                     </template> -->
                 </UCard>
             </template>
@@ -196,17 +180,13 @@ watch(selectedClasse, () => {
                 <UIcon name="i-heroicons-inbox" class="w-32 h-32 text-gray-400 dark:text-gray-500" />
             </div>
         </UDashboardPanel>
-        <UDashboardModal v-model="isNewOrganizationModalOpen" :title="`${actionToSubmit} un Organization`"
-            :description="`${actionToSubmit} un organization de la organization ${selectedClasse?.code}`"
+        <UDashboardModal v-model="isNewOrgModalOpen" title="Organization" description="Add one oganization"
             :ui="{ width: 'sm:max-w-md' }">
-            <!-- ~/components/users/UsersForm.vue -->
-            <OrganizationForm :organization="selectedClasse" :action='actionToSubmit' :organization="selectedOrganization"
-                @close="modalOrganizationClosed" />
+            <OrganizationForm :action='actionToSubmit' @close="modalOrganizationClosed" />
         </UDashboardModal>
-        <UDashboardModal v-model="isNewOrgModalOpen" title="Ajouter une organization" description="Ajouter une organization"
-            :ui="{ width: 'sm:max-w-md' }">
-            <!-- ~/components/users/UsersForm.vue -->
-            <ClassesForm @close="modalClasseClosed" />
+        <UDashboardModal v-model="isNewChildOrgModalOpen" title="Organization"
+            :description="`Add one oganization in ${selectedOrganization?.name}`" :ui="{ width: 'sm:max-w-md' }">
+            <OrganizationForm :action='actionToSubmit' @close="modalOrganizationClosed" />
         </UDashboardModal>
     </UDashboardPage>
 </template>

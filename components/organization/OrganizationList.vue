@@ -62,24 +62,24 @@ defineShortcuts({
 
 <template>
   <UDashboardPanelContent class="p-0">
-    <div v-for="(classe, index) in organizations" :key="index" :ref="el => { mailsRefs[classe.id] = el as Element }">
-      <div class="p-4 text-sm cursor-pointer border-l-2" :class="[selectedOrganization && selectedOrganization.id === classe.id ? 'border-primary-500 dark:border-primary-400 bg-primary-100 dark:bg-primary-900/25' : 'border-white dark:border-gray-900 hover:border-primary-500/25 dark:hover:border-primary-400/25 hover:bg-primary-100/50 dark:hover:bg-primary-900/10'
-      ]" @click="selectedOrganization = classe">
-        <!-- <div class="flex items-center justify-between" :class="[classe.unread && 'font-semibold']">
+    <div v-for="(organization, index) in organizations" :key="index" :ref="el => { mailsRefs[organization.id] = el as Element }">
+      <div class="p-4 text-sm cursor-pointer border-l-2" :class="[selectedOrganization && selectedOrganization.id === organization.id ? 'border-primary-500 dark:border-primary-400 bg-primary-100 dark:bg-primary-900/25' : 'border-white dark:border-gray-900 hover:border-primary-500/25 dark:hover:border-primary-400/25 hover:bg-primary-100/50 dark:hover:bg-primary-900/10'
+      ]" @click="selectedOrganization = organization">
+        <!-- <div class="flex items-center justify-between" :class="[organization.unread && 'font-semibold']">
           <div class="flex items-center gap-3">
-            {{ classe.name }}
+            {{ organization.name }}
 
-            <UChip v-if="classe.unread" />
+            <UChip v-if="organization.unread" />
           </div>
 
-          <span>{{ isToday(new Date(classe.date)) ? format(new Date(classe.date), 'HH:mm') : format(new
-            Date(classe.date), 'dd MMM') }}</span>
+          <span>{{ isToday(new Date(organization.date)) ? format(new Date(organization.date), 'HH:mm') : format(new
+            Date(organization.date), 'dd MMM') }}</span>
         </div> -->
         <p class="text-gray-400 dark:text-white line-clamp-1 font-bold">
-          {{ classe.name }}
+          {{ organization.name }}
         </p>
-        <!-- <p :class="[classe.unread && 'font-semibold']">
-          {{ classe.code }}
+        <!-- <p :class="[organization.unread && 'font-semibold']">
+          {{ organization.code }}
         </p> -->
       </div>
 
