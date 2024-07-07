@@ -6,12 +6,18 @@ const isNewOrganizationModalOpen = ref(false)
 const actionToSubmit = ref('Add')
 const isNewOrgModalOpen = ref(false)
 const isNewChildOrgModalOpen = ref(false)
+const isLoadChildOrg = ref(false)
 const selectedOrganization = ref<Organization | null>(null)
+const selectedChildOrganization = ref<Organization | null>(null)
 
 const { data: organizations, refresh } = await useFetch<Organization[]>('http://127.0.0.1:4000/organizations', { default: () => [] })
 
 const organizationColumns = [
     {
+        key: 'name',
+        label: 'Name',
+        sortable: true
+    }, {
         key: 'code',
         label: 'Code',
         sortable: true
@@ -25,9 +31,13 @@ const organizationColumns = [
 
 async function editOrganization(row: Organization) {
     actionToSubmit.value = 'Update'
+    selectedChildOrganization.value = row
+    isNewChildOrgModalOpen.value = true
+}
+async function editOrganization2(row: Organization) {
+    actionToSubmit.value = 'Update'
     selectedOrganization.value = row
-    // actionToSubmit.value = 'Add'
-    isNewOrganizationModalOpen.value = true
+    isNewOrgModalOpen.value = true
 }
 
 async function deleteOrganization(organization: Organization) {
@@ -69,16 +79,28 @@ const isMailPanelOpen = computed({
 
 function modalOrganizationClosed() {
     isNewOrgModalOpen.value = false;
+    isNewChildOrgModalOpen.value = false;
     refresh();
-    fetchOrganization(selectedOrganization.value.id)
+    if (selectedOrganization.value) {
+        fetchOrganization(selectedOrganization.value?.id)
+    }
 }
 
 async function fetchOrganization(id: string = 'default') {
+    isLoadChildOrg.value = true;
     try {
-        organizationResults.value = await $fetch<Organization[]>('http://127.0.0.1:4000/organizations/byparent', { method: 'GET', params: { organization_parent_id: id } })
+        if (id != 'default') {
+            const data = await $fetch<Organization[]>('http://127.0.0.1:4000/organizations/byparent', { method: 'GET', params: { organization_parent_id: id } })
+            setTimeout(() => {
+                organizationResults.value = data
+                isLoadChildOrg.value = false
+            }, 1000);
+        } else {
+            console.log("L'id du parent n'est pas fournis");
+        }
         // organizationResults.value = data.value
     } catch (error) {
-        console.log('Error', error);
+        console.log('Error in fetchOrganization : ', error);
     }
 }
 
@@ -90,9 +112,8 @@ async function fetchOrganization(id: string = 'default') {
 // })
 
 watch(selectedOrganization, () => {
-    console.log('Selected class ID = %s', selectedOrganization.value.id);
-    selectedOrganization.value = null
-    fetchOrganization(selectedOrganization.value.id).then(() => console.log('Organization fetched executed %s', selectedOrganization.value.id));
+    console.log('Selected organization ID = %s', selectedOrganization.value.id);
+    fetchOrganization(selectedOrganization.value?.id).then(() => console.log('Organization fetched executed %s', selectedOrganization.value.id));
 })
 
 </script>
@@ -100,10 +121,10 @@ watch(selectedOrganization, () => {
 <template>
     <UDashboardPage>
         <UDashboardPanel id="inbox" :width="400" :resizable="{ min: 300, max: 500 }">
-            <UDashboardNavbar title="Organizations" :badge="organizations.length">
+            <UDashboardNavbar title="Organizations" :badge="organizations?.length">
                 <template #right>
                     <UButton icon="i-heroicons-plus-16-solid" color="teal" variant="ghost"
-                        @click="isNewOrgModalOpen = true" />
+                        @click="isNewOrgModalOpen = true; selectedOrganization = null; actionToSubmit = 'Add'" />
                 </template>
             </UDashboardNavbar>
             <OrganizationList v-model="selectedOrganization" :organizations="organizations" />
@@ -118,7 +139,7 @@ watch(selectedOrganization, () => {
                     </template>
 
                     <template #left>
-                        <UTooltip text="Move to junk">
+                        <UTooltip text="Refresh">
                             <UButton icon="i-heroicons-arrow-path" color="gray" variant="ghost"
                                 @click="fetchOrganization(selectedOrganization.id)" />
                         </UTooltip>
@@ -126,7 +147,7 @@ watch(selectedOrganization, () => {
 
                     <template #right>
                         <UButton icon="i-heroicons-plus-16-solid" label="Ajouter" color="teal" variant="solid"
-                            @click="isNewOrganizationModalOpen = true" />
+                            @click="isNewChildOrgModalOpen = true; selectedChildOrganization = null; actionToSubmit = 'Add'" />
                     </template>
                 </UDashboardNavbar>
 
@@ -134,13 +155,37 @@ watch(selectedOrganization, () => {
                     base: 'm-2',
                     divide: 'divide-y divide-gray-200 dark:divide-gray-700',
                     header: {
-                        base: '',
+                        base: 'flex flex-col justify-between',
                         background: '',
                         padding: 'py-3 px-3'
                     }
                 }">
                     <template #header>
-                        {{ selectedOrganization.name }}
+                        <div class="flex flex-row justify-between">
+                            <Placeholder height="10" width='10' />
+                            {{ selectedOrganization.name }}
+                            <UButton icon="i-heroicons-ellipsis-vertical-solid" color="gray" variant="ghost"
+                                @click="editOrganization2(selectedOrganization)" />
+                        </div>
+                        <div class="grid grid-cols-4 gap-4">
+                            <div class="flex flex-col">
+                                <span class="font-extrabold text-teal-200">Name</span>
+                                <span>{{ selectedOrganization.name }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-extrabold text-teal-200">Code</span>
+                                <span>{{ selectedOrganization.code }}</span>
+                            </div>
+                            <div
+                                class="flex flex-col hover:opacity-5 hover:transition-all hover:duration-700 rounded-md">
+                                <span class="font-extrabold text-teal-200">Description</span>
+                                <span>{{ selectedOrganization.description }}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-extrabold text-teal-200">Category</span>
+                                <span>{{ selectedOrganization.lookups_id }}</span>
+                            </div>
+                        </div>
                     </template>
                 </UCard>
                 <UCard :ui="{
@@ -163,7 +208,7 @@ watch(selectedOrganization, () => {
                         </h2>
                     </template>
 
-                    <UTable :rows="organizationResults" :columns="organizationColumns"
+                    <UTable :rows="organizationResults" :columns="organizationColumns" :loading='isLoadChildOrg'
                         class="m-2 border border-separate rounded-md">
                         <template #actions-data="{ row }">
                             <UDropdown :items="items(row)">
@@ -180,13 +225,18 @@ watch(selectedOrganization, () => {
                 <UIcon name="i-heroicons-inbox" class="w-32 h-32 text-gray-400 dark:text-gray-500" />
             </div>
         </UDashboardPanel>
-        <UDashboardModal v-model="isNewOrgModalOpen" title="Organization" description="Add one oganization"
+        <UDashboardModal v-model="isNewOrgModalOpen" title="Organization" :description="`${actionToSubmit} oganization ${selectedOrganization?.name}`"
             :ui="{ width: 'sm:max-w-md' }">
-            <OrganizationForm :action='actionToSubmit' @close="modalOrganizationClosed" />
+            <OrganizationForm :action='actionToSubmit'
+                :description="`${actionToSubmit} oganization ${selectedOrganization?.name}`"
+                :organization="selectedOrganization"
+                @close="modalOrganizationClosed" />
         </UDashboardModal>
         <UDashboardModal v-model="isNewChildOrgModalOpen" title="Organization"
-            :description="`Add one oganization in ${selectedOrganization?.name}`" :ui="{ width: 'sm:max-w-md' }">
-            <OrganizationForm :action='actionToSubmit' @close="modalOrganizationClosed" />
+            :description="`${actionToSubmit} ${selectedChildOrganization ? selectedChildOrganization.name : ''} oganization in ${selectedOrganization?.name}`"
+            :ui="{ width: 'sm:max-w-md' }">
+            <OrganizationForm :action='actionToSubmit' :organization="selectedChildOrganization"
+                :organization-parent="selectedOrganization" @close="modalOrganizationClosed" />
         </UDashboardModal>
     </UDashboardPage>
 </template>

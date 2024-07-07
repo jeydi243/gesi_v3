@@ -14,21 +14,29 @@ let props = defineProps({
     type: String,
     required: true,
     default: "Add"
+  },
+  organization: {
+    type: Object as PropType<Organization>,
+    required: false,
+    default: null
   }
 })
 const isLoadingBtn = ref(false)
 const isLoadingLookup = ref(false)
 const state = reactive({
+  id: null,
   name: undefined,
   code: undefined,
   description: undefined,
   lookup_id: null,
   active_date: null,
-  end_date: null
+  end_date: null,
+  organization_parent_id: null
 })
 
 const date = ref(new Date())
 let lookups = ref([])
+
 async function getCategory() {
   try {
     const data = await $fetch<Lookups[]>('http://127.0.0.1:4000/lookups', { method: 'GET' })
@@ -39,11 +47,31 @@ async function getCategory() {
     console.log(error);
   }
 }
+
 onMounted(() => {
   getCategory()
+  // if (props.organizationParent) {
+  //   state.organization_parent_id = props.organizationParent.id
+  // }
+  if (props.organization) {
+    state.id = props.organization.id
+    state.code = props.organization.code
+    state.name = props.organization?.name
+    state.organization_parent_id = props.organizationParent?.id
+    state.description = props.organization.description
+  }
 })
 
-// https://ui.nuxt.com/components/form
+// onBeforeMount(() => {
+//   if (props.org) {
+//     state.id = props.org.id
+//     state.code = props.org.code
+//     state.name = props.org.name
+//     state.organization_parent_id = props.organizationParent.id
+//     state.description = props.org.description
+//   }
+// })
+
 const validate = (state: any): FormError[] => {
   const errors = []
   if (!state.name) errors.push({ path: 'name', message: 'Please enter a name.' })
@@ -57,10 +85,16 @@ const validate = (state: any): FormError[] => {
 async function onSubmit(event: FormSubmitEvent<any>) {
   isLoadingBtn.value = true
   console.log(event.data)
+  let response = null;
   // send new classe
   try {
-    const response = await $fetch<Organization>('http://127.0.0.1:4000/organizations', { method: 'POST', body: event.data })
-    console.log({ response });
+    if (props.action !== 'Add') {
+      response = await $fetch<Organization>('http://127.0.0.1:4000/organizations', { method: 'PATCH', body: event.data })
+    } else {
+      response = await $fetch<Organization>('http://127.0.0.1:4000/organizations', { method: 'POST', body: event.data })
+    }
+    console.dir(response)
+    console.log(`${props.action} a organization with name ${event.data?.name}.response =  ${JSON.stringify(response)}`);
     isLoadingBtn.value = false
     emit('close')
   } catch (error) {
@@ -68,10 +102,12 @@ async function onSubmit(event: FormSubmitEvent<any>) {
     isLoadingBtn.value = false
   }
 }
+
 </script>
 
 <template>
   <UForm :validate="validate" :validate-on="['submit']" :state="state" class="space-y-4" @submit="onSubmit">
+    The parent id is {{ props.organizationParent?.id }} est egale a {{ state.organization_parent_id }}
     <UFormGroup label="Name" name="name">
       <UInput v-model="state.name" placeholder="Gecamines" autofocus />
     </UFormGroup>

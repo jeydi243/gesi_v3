@@ -58,6 +58,7 @@ defineShortcuts({
     }
   }
 })
+
 </script>
 
 <template>
@@ -75,12 +76,12 @@ defineShortcuts({
           <span>{{ isToday(new Date(organization.date)) ? format(new Date(organization.date), 'HH:mm') : format(new
             Date(organization.date), 'dd MMM') }}</span>
         </div> -->
-        <p class="text-gray-400 dark:text-white line-clamp-1 font-bold">
+        <p class="text-gray-400 dark:text-white line-clamp-1 font-extrabold">
           {{ organization.name }}
         </p>
-        <!-- <p :class="[organization.unread && 'font-semibold']">
+        <p>
           {{ organization.code }}
-        </p> -->
+        </p>
       </div>
 
       <UDivider />

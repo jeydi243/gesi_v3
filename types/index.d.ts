@@ -65,7 +65,7 @@ export interface Organization extends Audit {
     code: string;
     name?: string;
     description?: string;
-    parent_organization_id?: string;
+    organization_parent_id?: string;
 }
 
 export type Period = "daily" | "weekly" | "monthly";

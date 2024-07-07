@@ -3,9 +3,10 @@ export default defineNuxtConfig({
     extends: [process.env.NUXT_UI_PRO_PATH || "@nuxt/ui-pro"],
     runtimeConfig: {
         // The private keys which are only available within server-side
-        base_url: "http://127.0.0.1:4000",
+        BASE_URL: process.env.BASE_URL,
         // Keys within public, will be also exposed to the client-side
         public: {
+            BASE_URL: process.env.BASE_URL,
             apiBase: "http://127.0.0.1:4000"
         }
     },
